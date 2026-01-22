@@ -1,0 +1,175 @@
+#include <Arduino.h>
+#include <Wire.h>
+#include <BH1750.h>
+
+BH1750 lightMeter;
+
+// === Pin definitions (per your PCB) ===
+const int LDR_LEFT   = 32;   // Analog input for left LDR (D32)
+const int LDR_RIGHT  = 33;   // Analog input for right LDR (D33)
+
+const int IN1 = 26;          // Motor driver IN1 (D26)
+const int IN2 = 27;          // Motor driver IN2 (D27)
+
+const int LIM_LEFT  = 12;    // Left limit switch (D12, COM → GPIO12, NC → GND)
+const int LIM_RIGHT = 4;     // Right limit switch (D4, COM → GPIO4, NC → GND)
+
+const int VOLT_SENSE = 34;   // Battery voltage sense input (D34)
+
+const int SDA_PIN = 21;      // I²C SDA (D21)
+const int SCL_PIN = 23;      // I²C SCL (D23)
+
+// === Config ===
+int THRESHOLD = 300;         // Tracking threshold in raw ADC counts
+const int DAY_THRESHOLD   = 500;   // Lux threshold to enter tracking
+const int NIGHT_THRESHOLD = 200;   // Lux threshold to park
+
+const float ADC_REF = 3.3;   // ESP32 ADC reference voltage
+const int   ADC_MAX = 4095;  // 12-bit ADC max value
+
+// === Flags (defaults ON) ===
+bool useLuxSensor   = true;   // lux sensor enabled by default
+bool parkMode       = true;   // park mode enabled by default
+bool useLimitSwitch = true;   // limit switch checks enabled by default
+
+// === Motor state tracking ===
+enum MotorState { STOPPED, LEFT, RIGHT };
+MotorState currentState = STOPPED;
+
+void setMotorState(MotorState newState) {
+  if (newState == currentState) return; // only act if state changes
+
+  currentState = newState;
+  switch (newState) {
+    case STOPPED:
+      digitalWrite(IN1, LOW);
+      digitalWrite(IN2, LOW);
+      Serial.println("Motor: STOP");
+      break;
+    case LEFT:
+      // FIXED: swapped logic so LEFT is correct
+      digitalWrite(IN1, LOW);
+      digitalWrite(IN2, HIGH);
+      Serial.println("Motor: LEFT");
+      break;
+    case RIGHT:
+      // FIXED: swapped logic so RIGHT is correct
+      digitalWrite(IN1, HIGH);
+      digitalWrite(IN2, LOW);
+      Serial.println("Motor: RIGHT");
+      break;
+  }
+}
+
+// === Setup ===
+void setup() {
+  pinMode(IN1, OUTPUT);
+  pinMode(IN2, OUTPUT);
+
+  pinMode(LIM_LEFT, INPUT_PULLUP);
+  pinMode(LIM_RIGHT, INPUT_PULLUP);
+
+  analogReadResolution(12); // ESP32 ADC is 12-bit
+
+  Wire.begin(SDA_PIN, SCL_PIN); // SDA=21, SCL=23
+  lightMeter.begin();
+
+  Serial.begin(115200);
+  Serial.println("=== Solar Tracker Initialized ===");
+  Serial.println("Commands: l=toggle lux sensor, p=toggle park mode, m=toggle limit switches");
+  Serial.printf("Defaults: Lux=%s | Park=%s | Limit=%s\n",
+                useLuxSensor ? "ON" : "OFF",
+                parkMode ? "ON" : "OFF",
+                useLimitSwitch ? "ON" : "OFF");
+}
+
+// === Helpers ===
+bool leftLimitHit()  { return digitalRead(LIM_LEFT) == HIGH; }   // NC opens → HIGH
+bool rightLimitHit() { return digitalRead(LIM_RIGHT) == HIGH; }  // NC opens → HIGH
+
+// === Main loop ===
+void loop() {
+  // --- Serial commands ---
+  if (Serial.available() > 0) {
+    char cmd = Serial.read();
+    if (cmd == 'l' || cmd == 'L') {
+      useLuxSensor = !useLuxSensor;
+      Serial.print("Lux sensor enable = ");
+      Serial.println(useLuxSensor ? "ON" : "OFF");
+    }
+    if (cmd == 'p' || cmd == 'P') {
+      parkMode = !parkMode;
+      Serial.print("Park mode = ");
+      Serial.println(parkMode ? "ON" : "OFF");
+      if (parkMode) setMotorState(STOPPED);
+    }
+    if (cmd == 'm' || cmd == 'M') {
+      useLimitSwitch = !useLimitSwitch;
+      Serial.print("Limit switch checks = ");
+      Serial.println(useLimitSwitch ? "ON" : "OFF");
+    }
+  }
+
+  // --- Read sensors ---
+  int leftVal   = analogRead(LDR_LEFT);
+  int rightVal  = analogRead(LDR_RIGHT);
+  int diff      = leftVal - rightVal;
+
+  int limLeftRaw  = digitalRead(LIM_LEFT);
+  int limRightRaw = digitalRead(LIM_RIGHT);
+
+  int voltRaw   = analogRead(VOLT_SENSE);
+  float voltScaled = (voltRaw / (float)ADC_MAX) * ADC_REF; // scaled to 3.3 V
+
+  float lux = lightMeter.readLightLevel();
+
+  // --- Print all sensor values ---
+  Serial.printf("LDR L=%d | R=%d | Δ=%d | LIM_LEFT=%d | LIM_RIGHT=%d | VoltSense=%.3f V | Lux=%.1f\n",
+                leftVal, rightVal, diff, limLeftRaw, limRightRaw, voltScaled, lux);
+
+  // --- Park override ---
+  if (parkMode) {
+    setMotorState(STOPPED);
+    delay(500);
+    return;
+  }
+
+  // --- Lux sensor logic (only if enabled) ---
+  if (useLuxSensor) {
+    if (lux < NIGHT_THRESHOLD) {
+      setMotorState(STOPPED);
+      Serial.println("Night mode: parked");
+      delay(1000);
+      return;
+    }
+    if (lux < DAY_THRESHOLD) {
+      setMotorState(STOPPED);
+      Serial.println("Waiting for daylight...");
+      delay(1000);
+      return;
+    }
+  }
+
+  // --- Motor control logic (directional limit enforcement) ---
+  if (abs(diff) < THRESHOLD) {
+    setMotorState(STOPPED);
+  } else if (diff > 0) {
+    // LDR L brighter → rotate LEFT
+    if (useLimitSwitch && leftLimitHit()) {
+      setMotorState(STOPPED);
+      Serial.println("Left limit active: blocking LEFT rotation");
+    } else {
+      setMotorState(LEFT);
+    }
+  } else {
+    // LDR R brighter → rotate RIGHT
+    if (useLimitSwitch && rightLimitHit()) {
+      setMotorState(STOPPED);
+      Serial.println("Right limit active: blocking RIGHT rotation");
+    } else {
+      setMotorState(RIGHT);
+    }
+  }
+
+  delay(200); // small loop delay
+}
