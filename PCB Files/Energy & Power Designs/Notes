@@ -1,1 +1,2 @@
-
+403 design operates as expected, though the usage of a devkit makes it ineligible for the final product
+404 design will make use of the ESP32 WROOM chip and will be a replacement for the 403 design, now within the proper constraints.
