@@ -4,6 +4,6 @@ Weekly update #1 (1/25 - 1/31)
 Work on Status update presentation #1
 
 - Joshua Mulvena (Power subsystem)
-Continued work on the redesign of my PCB to include the ESP32 WROOM module instead of the Devkit.
+Continued work on the redesign of my PCB to include the ESP32 WROOM module instead of the Devkit, wanted to have it done earlier but had to work through some design issues.
 I expect to have it done before this week's lab begins (1/29) and will then move towards a PCB design review as soon as possible to submit my order.
 I don't expect the wait for my ordered PCB to cause any issues as I can just use my current board to perform any integration prototyping.
