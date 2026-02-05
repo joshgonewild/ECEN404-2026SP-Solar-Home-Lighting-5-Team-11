@@ -1,1 +1,16 @@
+Weekly update #1 (2/1 - 2/7)
 
+- Team
+Work on status update presentation #2
+
+- Joshua Mulvena (Power subsystem)
+With the updated PCB now ordered, I began work on the lighting control circuit that will be used to integrate the power subsystem to the sensing subsystem.
+I designed and simulated a circuit using multisim and then shifted to altium to begin the process of designing the PCB.
+This is a smaller board so I expect it should be on the cheaper side and possibly faster to manufacture. I am considering the use of JLPCB to expidite this order.
+As this is an interconnective board, I will use my time in lab this week to ensure it will interface smoothly with both subsystems.
+I plan on ordering the components for both boards at the same time to reduce the amount of orders I need to make and get approved.
+Components should arrive before both boards anyway. Th
+
+- Adrian Cortina (Sensing/Edge Computing Subsystem)
+
+-Braulio Perez (APP/Database)
