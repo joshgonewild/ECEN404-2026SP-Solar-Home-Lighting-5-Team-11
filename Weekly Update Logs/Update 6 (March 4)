@@ -1,1 +1,12 @@
+Weekly update #6 (3/1 - 3/7)
 
+- Team
+General fixes and debugging of system integration. Added data transfer from ESP (Power subsystem) to Pi 4 (sensing subsystem) so that the data from the battery and tracking mechanism
+are available to the app/database. 
+Also tested the lighting fixtures with the switching circuit and it worked great. All that appears to remain is smoothing out the general function and appearance of our integrated system. 
+
+- Joshua Mulvena (Power subsystem)
+
+- Adrian Cortina (Sensing/Edge Computing Subsystem)
+
+-Braulio Perez (APP/Database)
