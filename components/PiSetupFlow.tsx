@@ -24,7 +24,7 @@ export const PiSetupFlow = ({ userId, onSetupComplete }) => {
 
     const handleSetup = async () => {
         if (!piConnected) {
-            Alert.alert('Not Connected', 'Please connect to the Pi hotspot first');
+            Alert.alert('Not Connected', 'Please connect to a SOLARIS device first');
             return;
         }
         if (!ssid || !password || !deviceName) {
