@@ -1,0 +1,218 @@
+#include <Arduino.h>
+#include <Wire.h>
+#include <BH1750.h>
+
+BH1750 lightMeter;
+
+// ================= UART TO PI =================
+HardwareSerial PiSerial(2);
+static const int PI_RX_PIN = 16;
+static const int PI_TX_PIN = 17;
+
+// === Pin definitions ===
+const int LDR_LEFT   = 32;
+const int LDR_RIGHT  = 33;
+
+const int IN1 = 26;
+const int IN2 = 27;
+
+const int LIM_LEFT  = 12;
+const int LIM_RIGHT = 14;
+
+const int VOLT_SENSE = 34;
+
+// *** SDA/SCL flipped here ***
+const int SDA_PIN = 23;
+const int SCL_PIN = 21;
+
+// === Config ===
+int THRESHOLD = 300;
+const int DAY_THRESHOLD   = 500;
+const int NIGHT_THRESHOLD = 200;
+
+const float ADC_REF = 3.3;
+const int   ADC_MAX = 4095;
+
+// === Battery percentage config ===
+const float BATT_FULL  = 13.6;   // 100%
+const float BATT_EMPTY = 11.8;   // 0%
+
+// === Divider calibration ===
+const float BATTERY_SCALE_RAW = 4.9215686f;   // (200k + 51k) / 51k
+const float CAL_FACTOR        = 1.0417f;      // adjust after measuring
+const float BATTERY_SCALE     = BATTERY_SCALE_RAW * CAL_FACTOR;
+
+// === Averaging config ===
+const int NUM_SAMPLES = 10;
+float battSamples[NUM_SAMPLES] = {0};
+int sampleIndex = 0;
+bool bufferFilled = false;
+
+// === Flags ===
+bool useLuxSensor   = true;
+bool parkMode       = true;
+bool useLimitSwitch = true;
+
+// === Motor state tracking ===
+enum MotorState { STOPPED, LEFT, RIGHT };
+MotorState currentState = STOPPED;
+
+void setMotorState(MotorState newState) {
+  if (newState == currentState) return;
+
+  currentState = newState;
+  switch (newState) {
+    case STOPPED:
+      digitalWrite(IN1, LOW);
+      digitalWrite(IN2, LOW);
+      Serial.println("Motor: STOP");
+      break;
+    case LEFT:
+      digitalWrite(IN1, LOW);
+      digitalWrite(IN2, HIGH);
+      Serial.println("Motor: LEFT");
+      break;
+    case RIGHT:
+      digitalWrite(IN1, HIGH);
+      digitalWrite(IN2, LOW);
+      Serial.println("Motor: RIGHT");
+      break;
+  }
+}
+
+void setup() {
+  pinMode(IN1, OUTPUT);
+  pinMode(IN2, OUTPUT);
+
+  pinMode(LIM_LEFT, INPUT_PULLUP);
+  pinMode(LIM_RIGHT, INPUT_PULLUP);
+
+  analogReadResolution(12);
+
+  Wire.begin(SDA_PIN, SCL_PIN);
+  lightMeter.begin();
+
+  Serial.begin(115200);
+  PiSerial.begin(115200, SERIAL_8N1, PI_RX_PIN, PI_TX_PIN);
+
+  Serial.println("=== Solar Tracker Initialized ===");
+  Serial.println("Commands: l=toggle lux sensor, p=toggle park mode, m=toggle limit switches");
+  Serial.printf("Defaults: Lux=%s | Park=%s | Limit=%s\n",
+                useLuxSensor ? "ON" : "OFF",
+                parkMode ? "ON" : "OFF",
+                useLimitSwitch ? "ON" : "OFF");
+}
+
+bool leftLimitHit()  { return digitalRead(LIM_LEFT) == HIGH; }
+bool rightLimitHit() { return digitalRead(LIM_RIGHT) == HIGH; }
+
+void loop() {
+
+  // --- Serial commands (USB only) ---
+  if (Serial.available() > 0) {
+    char cmd = Serial.read();
+    if (cmd == 'l' || cmd == 'L') {
+      useLuxSensor = !useLuxSensor;
+      Serial.print("Lux sensor enable = ");
+      Serial.println(useLuxSensor ? "ON" : "OFF");
+    }
+    if (cmd == 'p' || cmd == 'P') {
+      parkMode = !parkMode;
+      Serial.print("Park mode = ");
+      Serial.println(parkMode ? "ON" : "OFF");
+      if (parkMode) setMotorState(STOPPED);
+    }
+    if (cmd == 'm' || cmd == 'M') {
+      useLimitSwitch = !useLimitSwitch;
+      Serial.print("Limit switch checks = ");
+      Serial.println(useLimitSwitch ? "ON" : "OFF");
+    }
+  }
+
+  // --- Read sensors ---
+  int leftVal   = analogRead(LDR_LEFT);
+  int rightVal  = analogRead(LDR_RIGHT);
+  int diff      = leftVal - rightVal;
+
+  int limLeftRaw  = digitalRead(LIM_LEFT);
+  int limRightRaw = digitalRead(LIM_RIGHT);
+
+  // === Battery sensing with averaging ===
+  int voltRaw = analogRead(VOLT_SENSE);
+  float voltScaled = (voltRaw / (float)ADC_MAX) * ADC_REF;
+
+  float batteryVoltageInstant = voltScaled * BATTERY_SCALE;
+
+  // Store sample
+  battSamples[sampleIndex] = batteryVoltageInstant;
+  sampleIndex = (sampleIndex + 1) % NUM_SAMPLES;
+  if (sampleIndex == 0) bufferFilled = true;
+
+  // Compute average
+  float batteryVoltage = 0.0f;
+  int count = bufferFilled ? NUM_SAMPLES : sampleIndex;
+  for (int i = 0; i < count; i++) {
+    batteryVoltage += battSamples[i];
+  }
+  batteryVoltage /= count;
+
+  // Battery percentage
+  float battPct = (batteryVoltage - BATT_EMPTY) / (BATT_FULL - BATT_EMPTY);
+  battPct = constrain(battPct, 0.0f, 1.0f) * 100.0f;
+
+  float lux = lightMeter.readLightLevel();
+
+  // --- USB debug output ---
+  Serial.printf("LDR L=%d | R=%d | Δ=%d | LIM_LEFT=%d | LIM_RIGHT=%d | "
+                "Batt=%.2f V | BattPct=%.0f%% | Lux=%.1f\n",
+                leftVal, rightVal, diff, limLeftRaw, limRightRaw,
+                batteryVoltage, battPct, lux);
+
+  // === UART OUTPUT TO PI ===
+  PiSerial.printf("DATA,BAT=%.2f,PCT=%.0f,LUX=%.1f,LIM=%d,%d,STATE=%d\n",
+                  batteryVoltage, battPct, lux, limLeftRaw, limRightRaw, currentState);
+
+  // --- Park override ---
+  if (parkMode) {
+    setMotorState(STOPPED);
+    delay(500);
+    return;
+  }
+
+  // --- Lux logic ---
+  if (useLuxSensor) {
+    if (lux < NIGHT_THRESHOLD) {
+      setMotorState(STOPPED);
+      Serial.println("Night mode: parked");
+      delay(1000);
+      return;
+    }
+    if (lux < DAY_THRESHOLD) {
+      setMotorState(STOPPED);
+      Serial.println("Waiting for daylight...");
+      delay(1000);
+      return;
+    }
+  }
+
+  // --- Motor logic ---
+  if (abs(diff) < THRESHOLD) {
+    setMotorState(STOPPED);
+  } else if (diff > 0) {
+    if (useLimitSwitch && leftLimitHit()) {
+      setMotorState(STOPPED);
+      Serial.println("Left limit active: blocking LEFT rotation");
+    } else {
+      setMotorState(LEFT);
+    }
+  } else {
+    if (useLimitSwitch && rightLimitHit()) {
+      setMotorState(STOPPED);
+      Serial.println("Right limit active: blocking RIGHT rotation");
+    } else {
+      setMotorState(RIGHT);
+    }
+  }
+
+  delay(200);
+}
