@@ -7,7 +7,8 @@ export default function AppLayout() {
         <Stack>
             {/* The dashboard screen will have no header, as it has its own */}
             <Stack.Screen name="dashboard" options={{ headerShown: false }} />
-            <Stack.Screen name="metrics" options={{ title: 'Metrics' }} />
+            <Stack.Screen name="metrics" options={{ headerShown: false }} />
+            <Stack.Screen name="settings" options={{ headerShown: false }} />
             {/* Add other app screens here, e.g., settings, profile, etc. */}
             {/* <Stack.Screen name="settings" options={{ title: 'Settings' }} /> */}
         </Stack>
