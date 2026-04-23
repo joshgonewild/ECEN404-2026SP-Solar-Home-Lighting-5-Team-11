@@ -1,0 +1,173 @@
+Wire List
+
+<<< Component List >>>
+1935776                         Batteryin      PHOENIX_1935776
+100nF                           Cboot          FP-CC0805-0_85-MFG
+10pF                            Ccomp1         FP-C0805C-DN-MFG
+1nF                             Ccomp2         FP-CC0805-0_85-MFG
+Capacitor 22µF +/-40% 16V 0805  Cin1           CAPC0805(2012)145_L
+47uF                            Cout           FP-GRM21B-0_2-e0_2_0_7-IPC_A
+8.2nF                           Css1           FP-GRM219-0_1-IPC_C
+100nF                           Cstab1         FP-CC0805-0_85-MFG
+1N5822                          Dout           FP-DO-201AD-MFG
+1733499                         Extra          1733499
+1733499                         J1             1733499
+6.8uH                           L1             FP-MLZ2012-0_85-IPC_A
+1935776                         Load           PHOENIX_1935776
+1935776                         MotorCtrl      PHOENIX_1935776
+1935776                         MotorPWR       PHOENIX_1935776
+1935776                         MPPTin         PHOENIX_1935776
+200k                            R2             RESC2013X50X30NL20T20
+51k                             R3             RESC2013X50X30NL20T20
+66.5k                           Rcomp          RESC2013X50X30LL20T20
+10.2k                           Rfbt1          RESC2013X50X30NL20T20
+1.96k                           Rfbt2          RESC2013X50X30LL20T20
+10k                             Rs1            FP-CRCW0805-e3-IPC_A
+10k                             Rs2            FP-CRCW0805-e3-IPC_A
+ESP32-DEVKIT-V1                 U1             MODULE_ESP32_DEVKIT_V1
+TPS54331D                       U2             D0008A_L
+
+<<< Wire List >>>
+
+  NODE  REFERENCE  PIN #   PIN NAME       PIN TYPE    PART VALUE
+
+[00038] Vbus+
+        Batteryin  2       2              PASSIVE     1935776
+        Cin1       1       1              PASSIVE     Capacitor 22µF +/-40% 16V 0805
+        Load       2       2              PASSIVE     1935776
+        MotorPWR   2       2              PASSIVE     1935776
+        MPPTin     2       2              PASSIVE     1935776
+        R2         1       1              PASSIVE     200k
+        U2         2       VIN            POWER       TPS54331D
+
+[00037] SDA
+        J1         8       8              PASSIVE     1733499
+        U1         11      D21            I/O         ESP32-DEVKIT-V1
+
+[00036] SCL
+        J1         7       7              PASSIVE     1733499
+        U1         15      D23            I/O         ESP32-DEVKIT-V1
+
+[00023] NetRfbt1_1
+        Rfbt1      1       1              PASSIVE     10.2k
+        Rfbt2      2       2              PASSIVE     1.96k
+        U2         5       VSENSE         INPUT       TPS54331D
+
+[00022] NetJ1_10
+        J1         10      10             PASSIVE     1733499
+        U1         20      D35            I/O         ESP32-DEVKIT-V1
+
+[00021] NetExtra_6
+        Extra      6       6              PASSIVE     1733499
+        U1         27      D12            I/O         ESP32-DEVKIT-V1
+
+[00020] NetExtra_5
+        Extra      5       5              PASSIVE     1733499
+        U1         28      D13            I/O         ESP32-DEVKIT-V1
+
+[00019] NetExtra_4
+        Extra      4       4              PASSIVE     1733499
+        U1         26      D14            I/O         ESP32-DEVKIT-V1
+
+[00018] NetExtra_3
+        Extra      3       3              PASSIVE     1733499
+        U1         3       D15            I/O         ESP32-DEVKIT-V1
+
+[00017] NetExtra_2
+        Extra      2       2              PASSIVE     1733499
+        U1         9       D18            I/O         ESP32-DEVKIT-V1
+
+[00016] NetExtra_1
+        Extra      1       1              PASSIVE     1733499
+        U1         10      D19            I/O         ESP32-DEVKIT-V1
+
+[00015] NetCstab1_1
+        Cstab1     1       1              PASSIVE     100nF
+        R2         2       2              PASSIVE     200k
+        R3         2       2              PASSIVE     51k
+        U1         19      D34            I/O         ESP32-DEVKIT-V1
+
+[00014] NetCss1_1
+        Css1       1       1              PASSIVE     8.2nF
+        U2         4       SS             INPUT       TPS54331D
+
+[00013] NetCout_1
+        Cout       1       1              PASSIVE     47uF
+        L1         2       2              PASSIVE     6.8uH
+        Rfbt1      2       2              PASSIVE     10.2k
+        U1         30      VIN            INPUT       ESP32-DEVKIT-V1
+
+[00012] NetCcomp2_1
+        Ccomp2     1       1              PASSIVE     1nF
+        Rcomp      1       1              PASSIVE     66.5k
+
+[00011] NetCcomp1_1
+        Ccomp1     1       1              PASSIVE     10pF
+        Rcomp      2       2              PASSIVE     66.5k
+        U2         6       COMP           PASSIVE     TPS54331D
+
+[00010] NetCboot_2
+        Cboot      2       2              PASSIVE     100nF
+        Dout       1       C              PASSIVE     1N5822
+        L1         1       1              PASSIVE     6.8uH
+        U2         8       PH             POWER       TPS54331D
+
+[00009] NetCboot_1
+        Cboot      1       1              PASSIVE     100nF
+        U2         1       BOOT           PASSIVE     TPS54331D
+
+[00008] Lim2
+        Extra      8       8              PASSIVE     1733499
+        U1         5       D4             I/O         ESP32-DEVKIT-V1
+
+[00007] Lim1
+        Extra      10      10             PASSIVE     1733499
+        U1         4       D2             I/O         ESP32-DEVKIT-V1
+
+[00006] LDR2
+        J1         4       4              PASSIVE     1733499
+        Rs2        1       1              PASSIVE     10k
+        U1         22      D33            I/O         ESP32-DEVKIT-V1
+
+[00005] LDR1
+        J1         3       3              PASSIVE     1733499
+        Rs1        1       1              PASSIVE     10k
+        U1         21      D32            I/O         ESP32-DEVKIT-V1
+
+[00004] IN2
+        MotorCtrl  2       2              PASSIVE     1935776
+        U1         25      D27            I/O         ESP32-DEVKIT-V1
+
+[00003] IN1
+        MotorCtrl  1       1              PASSIVE     1935776
+        U1         24      D26            I/O         ESP32-DEVKIT-V1
+
+[00002] GND
+        Batteryin  1       1              PASSIVE     1935776
+        Ccomp1     2       2              PASSIVE     10pF
+        Ccomp2     2       2              PASSIVE     1nF
+        Cin1       2       2              PASSIVE     Capacitor 22µF +/-40% 16V 0805
+        Cout       2       2              PASSIVE     47uF
+        Css1       2       2              PASSIVE     8.2nF
+        Cstab1     2       2              PASSIVE     100nF
+        Dout       2       A              PASSIVE     1N5822
+        Extra      7       7              PASSIVE     1733499
+        Extra      9       9              PASSIVE     1733499
+        J1         6       6              PASSIVE     1733499
+        J1         9       9              PASSIVE     1733499
+        Load       1       1              PASSIVE     1935776
+        MotorPWR   1       1              PASSIVE     1935776
+        MPPTin     1       1              PASSIVE     1935776
+        R3         1       1              PASSIVE     51k
+        Rfbt2      1       1              PASSIVE     1.96k
+        Rs1        2       2              PASSIVE     10k
+        Rs2        2       2              PASSIVE     10k
+        U1         2       GND            POWER       ESP32-DEVKIT-V1
+        U2         7       GND            POWER       TPS54331D
+
+[00001] 3v3
+        J1         1       1              PASSIVE     1733499
+        J1         2       2              PASSIVE     1733499
+        J1         5       5              PASSIVE     1733499
+        U1         1       3V3            OUTPUT      ESP32-DEVKIT-V1
+

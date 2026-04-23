@@ -1,0 +1,13 @@
+Weekly update #5 (2/22 - 2/28)
+
+- Team
+Initial integration went very well, all boards operate as expected. Team has done a full integration test and succeeded in operating the lighting circuit through the app.
+Going forward we will be trying to iron out the wrinkles in the performance of the fully integrated system. 
+
+- Joshua Mulvena (Power subsystem)
+ Interconnective lighting PCB is fully operational, replacement PCB for my subsystem (Using WROOM chip instead of ESP devkit) works as intended.
+ Integrated with Adrian's subsystem, need to update code to support data transfer through UART on both ends. 
+
+- Adrian Cortina (Sensing/Edge Computing Subsystem)
+
+-Braulio Perez (APP/Database)
