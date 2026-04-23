@@ -4,6 +4,7 @@ import { useRouter, useSegments } from 'expo-router';
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Alert } from 'react-native';
 
+// Define the shape of the Auth context
 interface AuthContextType {
     session: Session | null;
     user: User | null;
@@ -11,12 +12,12 @@ interface AuthContextType {
     signIn: (email: string, password: string) => Promise<void>;
     signUp: (email: string, password: string) => Promise<void>;
     signOut: () => Promise<void>;
-    resetPassword: (email: string) => Promise<void>;
-    updatePassword: (newPassword: string) => Promise<void>;
 }
 
+// Create the Auth context
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Custom hook to use the Auth context
 export const useAuth = () => {
     const context = useContext(AuthContext);
     if (!context) {
@@ -25,6 +26,7 @@ export const useAuth = () => {
     return context;
 };
 
+// AuthProvider component
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
                                                                           children,
                                                                       }) => {
@@ -34,6 +36,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     const router = useRouter();
     const segments = useSegments();
 
+    // Effect to load session and listen for auth changes
     useEffect(() => {
         const fetchSession = async () => {
             try {
@@ -51,34 +54,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
         fetchSession();
 
+        // Listen for auth state changes
         const {
             data: { subscription },
         } = supabase.auth.onAuthStateChange((_event, session) => {
             setSession(session);
             setUser(session?.user ?? null);
-
-            if (_event === 'PASSWORD_RECOVERY') {
-                router.replace('/(auth)/update-password');
-            }
         });
 
+        // Unsubscribe on unmount
         return () => {
             subscription?.unsubscribe();
         };
     }, []);
 
+    // Effect to handle redirection based on auth state
     useEffect(() => {
         if (isLoading) return;
 
         const inAuthGroup = segments[0] === '(auth)';
 
         if (!session && !inAuthGroup) {
+            // Redirect to login screen if not authenticated
             router.replace('/(auth)');
         } else if (session && inAuthGroup) {
+            // Redirect to dashboard if authenticated
             router.replace('/(app)/dashboard');
         }
     }, [session, isLoading, segments, router]);
 
+    // Sign in function
     const signIn = async (email: string, password: string) => {
         const { error } = await supabase.auth.signInWithPassword({
             email,
@@ -89,6 +94,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         }
     };
 
+    // Sign up function
     const signUp = async (email: string, password: string) => {
         const {
             data: { session },
@@ -107,32 +113,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         }
     };
 
+    // Sign out function
     const signOut = async () => {
         const { error } = await supabase.auth.signOut();
         if (error) {
             Alert.alert('Sign Out Error', error.message);
         }
-    };
-
-    const resetPassword = async (email: string) => {
-        const { error } = await supabase.auth.resetPasswordForEmail(email, {
-            redirectTo: 'solarhome://reset-password',
-        });
-        if (error) {
-            Alert.alert('Error', error.message);
-        } else {
-            Alert.alert('Check your email', 'A password reset link has been sent.');
-        }
-    };
-
-    const updatePassword = async (newPassword: string) => {
-        const { error } = await supabase.auth.updateUser({ password: newPassword });
-        if (error) {
-            Alert.alert('Error', error.message);
-        } else {
-            Alert.alert('Success', 'Your password has been updated.');
-            router.replace('/(app)/dashboard');
-        }
+        // The onAuthStateChange listener will handle setting session to null
+        // and the redirection effect will trigger.
     };
 
     const value = {
@@ -142,10 +130,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         signIn,
         signUp,
         signOut,
-        resetPassword,
-        updatePassword,
     };
 
+    // Render children only when not loading
     return (
         <AuthContext.Provider value={value}>
             {!isLoading && children}

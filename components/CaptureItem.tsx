@@ -42,36 +42,36 @@ const VideoPlayerComponent = ({
         if (!player) return;
         onLoadingChange(true);
 
-        const playingSubscription = player.addListener('playingChange', (payload) => {
-            if (payload.isPlaying) {
-                onLoadingChange(false);
-            }
-        });
+        try {
+            const playingSubscription = player.addListener('playingChange', (payload) => {
+                if (payload.isPlaying) onLoadingChange(false);
+            });
 
-        const statusSubscription = player.addListener('statusChange', (payload) => {
-            if (payload.status === 'error' && payload.error) {
-                onLoadingChange(false);
-                onError(payload.error);
-            } else if (payload.status === 'readyToPlay') {
-                onLoadingChange(false);
-            }
-        });
+            const statusSubscription = player.addListener('statusChange', (payload) => {
+                if (payload.status === 'error' && payload.error) {
+                    onLoadingChange(false);
+                    onError(payload.error);
+                } else if (payload.status === 'readyToPlay') {
+                    onLoadingChange(false);
+                } else if (payload.status === 'loading') {
+                    onLoadingChange(true);
+                }
+            });
 
-        const timeout = setTimeout(() => {
-            onLoadingChange(false);
-        }, 8000);
-
-        return () => {
-            clearTimeout(timeout);
-            try {
-                playingSubscription?.remove();
-                statusSubscription?.remove();
-                if (player) player.pause();
-            } catch (error) {
-                console.log('Video cleanup (safe to ignore):', error);
-            }
-        };
-    }, [player]);
+            return () => {
+                try {
+                    playingSubscription?.remove();
+                    statusSubscription?.remove();
+                    if (player) player.pause();
+                } catch (error) {
+                    console.log('Video cleanup (safe to ignore):', error);
+                }
+            };
+        } catch (err) {
+            console.error('Error setting up video listeners:', err);
+            onError(err);
+        }
+    }, [player, onLoadingChange, onError]);
 
     return (
         <VideoView
@@ -104,7 +104,7 @@ export default function CaptureItem({
     const [loading, setLoading] = useState(false);
     const [videoError, setVideoError] = useState<string | null>(null);
 
-    // Generate thumbnail
+    // NEW: Generate thumbnail
     const [generatedThumbnail, setGeneratedThumbnail] = useState<string | null>(null);
     useEffect(() => {
         // If we already have a backend thumbnail, don't waste resources generating one

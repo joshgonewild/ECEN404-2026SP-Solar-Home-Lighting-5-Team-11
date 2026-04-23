@@ -8,7 +8,5 @@ yarn-error.log*
 /.pnp
 .pnp.js
 .expo/
-android/
-ios/
 
 .vscode/*

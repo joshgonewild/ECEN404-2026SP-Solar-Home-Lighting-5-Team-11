@@ -19,7 +19,7 @@ export default function AuthScreen() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
-    const { signIn, signUp, resetPassword } = useAuth();
+    const { signIn, signUp } = useAuth();
 
     const handleAuthAction = async () => {
         if (loading) return;
@@ -33,22 +33,6 @@ export default function AuthScreen() {
             }
         } catch (error: any) {
             Alert.alert('Error', error.message || 'An unknown error occurred.');
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleForgotPassword = async () => {
-        if (!email) {
-            Alert.alert(
-                'Enter your email first',
-                'Type your email address above, then tap "Forgot Password?"'
-            );
-            return;
-        }
-        setLoading(true);
-        try {
-            await resetPassword(email);
         } finally {
             setLoading(false);
         }
@@ -93,17 +77,6 @@ export default function AuthScreen() {
                             secureTextEntry
                             textContentType="password"
                         />
-
-                        {/* Forgot Password - only shown on login */}
-                        {isLogin && (
-                            <TouchableOpacity
-                                style={styles.forgotPasswordButton}
-                                onPress={handleForgotPassword}
-                                disabled={loading}
-                            >
-                                <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
-                            </TouchableOpacity>
-                        )}
                     </View>
 
                     {/* Auth Button */}
@@ -186,20 +159,10 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: '#E0E0E0',
     },
-    forgotPasswordButton: {
-        alignSelf: 'flex-end',
-        marginTop: -4,
-        marginBottom: 4,
-    },
-    forgotPasswordText: {
-        color: '#007AFF',
-        fontSize: 14,
-        fontWeight: '500',
-    },
     button: {
         width: '100%',
         height: 50,
-        backgroundColor: '#007AFF',
+        backgroundColor: '#007AFF', // A modern blue
         borderRadius: 12,
         justifyContent: 'center',
         alignItems: 'center',
