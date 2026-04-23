@@ -1,4 +1,0 @@
-This lighting control circuit is a basic interpretation of what will be created on a PCB board to integrate the power and sensing subsystems.
-The primary purpose is to recieve power from the power board (12V) and GPIO inputs from the sensing board to activate or deactivate two separate LED lights in the porch/foyer.
-This circuit was simulated and works properly.
-As of the upload of this summary the PCB files are not yet available here but will be soon. (Approx. Feb 7)
